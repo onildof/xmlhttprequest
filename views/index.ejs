@@ -3,34 +3,55 @@
     <head>
         <meta charset="utf-8"/>
         <title>AJAX XMLHttpRequest encadeado em loop infinito</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
     <body>
         <h1>AJAX XMLHttpRequest encadeado em loop infinito</h1>
         <div id="output">Soma: 0</div>
         <div id="output2">Última: 0</div>
-        <button id="load">load</button>
+        <form id="form" method="post" action="/users">
+            <input type="text" value="0">
+            <input type="submit" name="action" value="start">
+            <input type="submit" name="action" value="stop">
+        </form>
         
         <script>
             let output = document.querySelector("#output")
             let output2 = document.querySelector("#output2")
-            let button = document.querySelector("#load")
             let soma = 0
+            let keepgoing = false
 
-            button.addEventListener("click", function () {
-                consulta()
+            $(document).ready(function () {
+                $("#form").submit(function (event) {
+                    event.preventDefault()
+                    let pressedButton = $("input[type=submit]:focus").attr("value")
+                    
+                    if (pressedButton == "start") {
+                        if (keepgoing == false) {
+                            keepgoing = true
+                            consultasInfinitas()
+                        }
+                    }
+                    else if (pressedButton == "stop") {
+                        keepgoing = false //o lado cliente para de enviar consultas
+                    }
+                    
+                })
             })
-            
-            function consulta() {
+
+            function consultasInfinitas() {
                 let xhr = new XMLHttpRequest()
                 
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == 4 && xhr.status == 200) {
                         atualizaPagina(xhr.response)
-                        consulta()
+                        if (keepgoing) {
+                            consultasInfinitas()
+                        }
                     }
                 }
                 
-                xhr.open('GET', '/users', true)
+                xhr.open('POST', '/users', true)
                 xhr.send()
             }
             

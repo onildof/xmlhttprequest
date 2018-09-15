@@ -1,21 +1,37 @@
 <!doctype html>
 <html>
     <head>
-        <meta charset="utf-8"/>
-        <title>AJAX XMLHttpRequest encadeado em loop infinito</title>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+        <title>Express.js + XMLHttpRequest + jQuery + Bootstrap progressbar</title>        
     </head>
     <body>
-        <h1>AJAX XMLHttpRequest encadeado em loop infinito</h1>
+        <h1>Express.js + XMLHttpRequest + jQuery + Bootstrap progressbar</h1>
         <div id="output">Soma: 0</div>
         <div id="output2">Novo: 0</div>
+        <br/>
+        <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
+        </div>
+        <br/>
         <form id="form" method="post" action="/users">
             <input type="text" value="0">
             <input type="submit" name="action" value="start">
             <input type="submit" name="action" value="stop">
         </form>
         
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
         <script>
+            const maxValue = 660000
             let started = false
             let interval = null
 
@@ -43,7 +59,7 @@
                 started = true
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == 4 && xhr.status == 200) {
-                        document.querySelector("h1").innerHTML = xhr.responseText
+                        $("h1").html(xhr.responseText)
                         interval = setInterval(consultar, 1000)
                     }
                 }
@@ -57,9 +73,9 @@
                 
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == 4 && xhr.status == 200) {
-                        document.querySelector("h1").innerHTML = xhr.responseText
+                        $("h1").html(xhr.responseText)
                         clearInterval(interval)
-                        consultar() //pro caso de ter ocorrido uma última atualização no servidor que não foi trazida pra página
+                        consultar() //pro caso de ter ocorrido uma última atualização no servidor que não foi consultada pelo cliente
                         started = false
                     }
                 }
@@ -83,9 +99,12 @@
             
             function atualizaPagina(http_response) {
                 let json = JSON.parse(http_response)
+                let progressbarValue = Math.floor((parseInt(json.soma) / maxValue)*100)
 
-                document.querySelector("#output").innerHTML = "Soma: "+json.soma
-                document.querySelector("#output2").innerHTML = "Novo: "+json.novoNumero
+                $("#output").html(`Soma: ${json.soma}`)
+                $("#output2").html(`Novo: ${json.novoNumero}`)
+                $(".progress-bar").attr("style", `width: ${progressbarValue}%`)
+                $(".progress-bar").html(`${progressbarValue}%`)
             }
         </script>
     </body>

@@ -8,7 +8,7 @@
     <body>
         <h1>AJAX XMLHttpRequest encadeado em loop infinito</h1>
         <div id="output">Soma: 0</div>
-        <div id="output2">Última: 0</div>
+        <div id="output2">Novo: 0</div>
         <form id="form" method="post" action="/users">
             <input type="text" value="0">
             <input type="submit" name="action" value="start">
@@ -16,10 +16,8 @@
         </form>
         
         <script>
-            let output = document.querySelector("#output")
-            let output2 = document.querySelector("#output2")
-            let soma = 0
-            let keepgoing = false
+            let started = false
+            let interval = null
 
             $(document).ready(function () {
                 $("#form").submit(function (event) {
@@ -27,40 +25,67 @@
                     let pressedButton = $("input[type=submit]:focus").attr("value")
                     
                     if (pressedButton == "start") {
-                        if (keepgoing == false) {
-                            keepgoing = true
-                            consultasInfinitas()
+                        if (started == false) {
+                            iniciar()
                         }
                     }
                     else if (pressedButton == "stop") {
-                        keepgoing = false //o lado cliente para de enviar consultas
+                        if (started == true) {
+                            parar()
+                        }
                     }
-                    
                 })
             })
+            
+            function iniciar() {
+                let xhr = new XMLHttpRequest()
+                
+                started = true
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        document.querySelector("h1").innerHTML = xhr.responseText
+                        interval = setInterval(consultar, 1000)
+                    }
+                }
+                
+                xhr.open('POST', '/users/iniciar', true)
+                xhr.send()
+            }
+            
+            function parar() {
+                let xhr = new XMLHttpRequest
+                
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4 && xhr.status == 200) {
+                        document.querySelector("h1").innerHTML = xhr.responseText
+                        clearInterval(interval)
+                        consultar() //pro caso de ter ocorrido uma última atualização no servidor que não foi trazida pra página
+                        started = false
+                    }
+                }
+                
+                xhr.open('POST', '/users/parar', true)
+                xhr.send()
+            }
 
-            function consultasInfinitas() {
+            function consultar() {
                 let xhr = new XMLHttpRequest()
                 
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == 4 && xhr.status == 200) {
-                        atualizaPagina(xhr.response)
-                        if (keepgoing) {
-                            consultasInfinitas()
-                        }
+                        atualizaPagina(xhr.responseText)
                     }
                 }
                 
-                xhr.open('POST', '/users', true)
+                xhr.open('GET', '/users/consultar', true)
                 xhr.send()
             }
             
             function atualizaPagina(http_response) {
-                let tempo = parseInt(http_response)
-                
-                soma += tempo
-                output.innerHTML = "Soma: "+soma
-                output2.innerHTML = "Última: "+tempo
+                let json = JSON.parse(http_response)
+
+                document.querySelector("#output").innerHTML = "Soma: "+json.soma
+                document.querySelector("#output2").innerHTML = "Novo: "+json.novoNumero
             }
         </script>
     </body>
